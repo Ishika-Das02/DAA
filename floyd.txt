@@ -1,8 +1,5 @@
-# Number of vertices
 4
-
-# Adjacency matrix
-0 3 99999 7
-8 0 2 99999
-5 99999 0 1
-2 99999 99999 0
+0 5 INF 10
+INF 0 3 INF
+INF INF 0 1
+INF INF INF 0

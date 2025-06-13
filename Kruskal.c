@@ -1,88 +1,86 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX 1000
+#define MAX 100
 
-typedef struct Edge {
-    int src, dest, weight;
-} Edge;
-
-typedef struct Graph {
-    int V, E;
-    Edge edges[MAX];
-} Graph;
-
+int u[MAX], v[MAX], w[MAX]; // Parallel arrays for edges
 int parent[MAX];
+int n, e; // Number of vertices and edges
 
-void makeSet(int n) {
-    for (int i = 0; i < n; i++) {
-        parent[i] = i;
+// Find root
+int find(int i) {
+    while (parent[i] != i)
+        i = parent[i];
+    return i;
+}
+
+// Union of two sets
+void unionSets(int i, int j) {
+    int a = find(i);
+    int b = find(j);
+    parent[a] = b;
+}
+
+// Swap elements
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Simple bubble sort by weight
+void sortEdges() {
+    for (int i = 0; i < e - 1; i++) {
+        for (int j = 0; j < e - i - 1; j++) {
+            if (w[j] > w[j + 1]) {
+                swap(&w[j], &w[j + 1]);
+                swap(&u[j], &u[j + 1]);
+                swap(&v[j], &v[j + 1]);
+            }
+        }
     }
 }
 
-int findSet(int v) {
-    if (parent[v] != v)
-        parent[v] = findSet(parent[v]);
-    return parent[v];
-}
+void kruskalMST() {
+    for (int i = 0; i < n; i++)
+        parent[i] = i;
 
-void unionSets(int u, int v) {
-    int set1 = findSet(u);
-    int set2 = findSet(v);
-    if (set1 != set2)
-        parent[set2] = set1;
-}
+    sortEdges();
 
-int compareEdges(const void *a, const void *b) {
-    Edge *edgeA = (Edge *)a;
-    Edge *edgeB = (Edge *)b;
-    return edgeA->weight - edgeB->weight;
-}
+    int count = 0;
+    int total = 0;
+    printf("Edges in MST:\n");
+    for (int i = 0; i < e && count < n - 1; i++) {
+        int a = find(u[i]);
+        int b = find(v[i]);
 
-void krMST(Graph *graph) {
-    makeSet(graph->V);
-    qsort(graph->edges, graph->E, sizeof(graph->edges[0]), compareEdges);
-
-    Edge result[MAX];
-    int e = 0;
-
-    for (int i = 0; i < graph->E && e < graph->V - 1; i++) {
-        int u = graph->edges[i].src;
-        int v = graph->edges[i].dest;
-        int w = graph->edges[i].weight;
-
-        if (findSet(u) != findSet(v)) {
-            result[e++] = graph->edges[i];
-            unionSets(u, v);
+        if (a != b) {
+            printf("%d - %d : %d\n", u[i], v[i], w[i]);
+            unionSets(a, b);
+            total += w[i];
+            count++;
         }
     }
 
-    printf("Edges in MST:\n");
-    for (int i = 0; i < e; i++) {
-        printf("%d -- %d == %d\n", result[i].src, result[i].dest, result[i].weight);
-    }
+    printf("Total weight of MST: %d\n", total);
 }
 
 int main() {
-    Graph graph;
-    char filename[100];
-    FILE *file;
-
-    printf("Enter the filename: ");
-    scanf("%s", filename);
-
-    file = fopen(filename, "r");
-    if (!file) {
-        printf("Error: Unable to open file %s\n", filename);
+    FILE *fp = fopen("kruskals.txt", "r");
+    if (!fp) {
+        printf("Error opening file.\n");
         return 1;
     }
 
-    fscanf(file, "%d %d", &graph.V, &graph.E);
-    for (int i = 0; i < graph.E; i++) {
-        fscanf(file, "%d %d %d", &graph.edges[i].src, &graph.edges[i].dest, &graph.edges[i].weight);
-    }
-    fclose(file);
+    fscanf(fp, "%d %d", &n, &e);
 
-    krMST(&graph);
+    for (int i = 0; i < e; i++) {
+        fscanf(fp, "%d %d %d", &u[i], &v[i], &w[i]);
+    }
+
+    fclose(fp);
+
+    kruskalMST();
+
     return 0;
 }

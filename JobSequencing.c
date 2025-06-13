@@ -1,106 +1,77 @@
 #include <stdio.h>
-#include <stdlib.h>
 
-// Structure to store job details
-struct Job {
-    int id;       // Job ID
-    int deadline; // Deadline of job
-    int profit;   // Profit of job
-};
+#define MAX 100
 
-// Function to swap two jobs (for sorting)
-void swap(struct Job *a, struct Job *b) {
-    struct Job temp = *a;
-    *a = *b;
-    *b = temp;
-}
+int n;               // Number of jobs
+int d[MAX];          // Deadlines
+int p[MAX];          // Profits
+int J[MAX];          // Sequence of selected jobs
 
-// Function to sort jobs based on profit in descending order
-void sortJobs(struct Job jobs[], int n) {
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (jobs[j].profit < jobs[j + 1].profit) {
-                swap(&jobs[j], &jobs[j + 1]);
-            }
-        }
-    }
-}
-
-// Function to find the maximum deadline
-int findMaxDeadline(struct Job jobs[], int n) {
-    int maxDeadline = 0;
-    for (int i = 0; i < n; i++) {
-        if (jobs[i].deadline > maxDeadline) {
-            maxDeadline = jobs[i].deadline;
-        }
-    }
-    return maxDeadline;
-}
-
-// Function to perform Job Sequencing with Deadline
-void jobSequencing(struct Job jobs[], int n) {
-    // Step 1: Sort jobs in decreasing order of profit
-    sortJobs(jobs, n);
-
-    int maxDeadline = findMaxDeadline(jobs, n);
-    
-    int scheduledJobs[maxDeadline + 1]; // To store scheduled job IDs (0 means empty)
-    for (int i = 0; i <= maxDeadline; i++) {
-        scheduledJobs[i] = -1; // Initialize all slots as empty
-    }
-
-    int totalProfit = 0; // Variable to store maximum profit
-
-    // Step 2: Schedule jobs one by one
-    for (int i = 0; i < n; i++) {
-        int jobID = jobs[i].id;
-        int jobDeadline = jobs[i].deadline;
-        int jobProfit = jobs[i].profit;
-
-        // Find the latest available slot before the deadline
-        for (int j = jobDeadline; j > 0; j--) {
-            if (scheduledJobs[j] == -1) {
-                scheduledJobs[j] = jobID;
-                totalProfit += jobProfit;
-                break;
-            }
-        }
-    }
-
-    // Step 3: Print the scheduled jobs and maximum profit
-    printf("\nScheduled Jobs: ");
-    for (int i = 1; i <= maxDeadline; i++) {
-        if (scheduledJobs[i] != -1) {
-            printf("Job%d ", scheduledJobs[i]);
-        }
-    }
-
-    printf("\nMaximum Profit: %d\n", totalProfit);
-}
-
-// Main function
-int main() {
-    int n;
-
-    // User input: Number of jobs
-    printf("Enter the number of jobs: ");
+// Function to input and sort jobs by decreasing profit
+void inputAndSort() {
+    printf("Enter number of jobs: ");
     scanf("%d", &n);
 
-    struct Job jobs[n];
+    printf("Enter profits of jobs:\n");
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &p[i]);
 
-    // Taking user input for jobs
-    printf("Enter job details (ID, Deadline, Profit):\n");
-    for (int i = 0; i < n; i++) {
-        printf("Job %d ID: ", i + 1);
-        scanf("%d", &jobs[i].id);
-        printf("Job %d Deadline: ", i + 1);
-        scanf("%d", &jobs[i].deadline);
-        printf("Job %d Profit: ", i + 1);
-        scanf("%d", &jobs[i].profit);
+    printf("Enter deadlines of jobs:\n");
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &d[i]);
+
+    // Sort jobs in decreasing order of profit
+    for (int i = 1; i < n; i++) {
+        for (int j = i + 1; j <= n; j++) {
+            if (p[i] < p[j]) {
+                int temp = p[i]; p[i] = p[j]; p[j] = temp;
+                temp = d[i]; d[i] = d[j]; d[j] = temp;
+            }
+        }
+    }
+}
+
+// Function implementing the Job Sequencing algorithm
+int jobSequencing() {
+    d[0] = 0; // Dummy initialization
+    J[0] = 0;
+
+    J[1] = 1; // Always include the first job
+    int k = 1;
+
+    for (int i = 2; i <= n; i++) {
+        int r = k;
+
+        // Find position r where job i can be inserted
+        while ((d[J[r]] > d[i]) && (d[J[r]] != r))
+            r--;
+
+        if ((d[J[r]] <= d[i]) && (d[i] > r)) {
+            // Shift jobs to make space
+            for (int q = k; q > r; q--)
+                J[q + 1] = J[q];
+
+            J[r + 1] = i;
+            k++;
+        }
     }
 
-    // Perform job sequencing
-    jobSequencing(jobs, n);
+    return k; // Return number of jobs selected
+}
+
+int main() {
+    inputAndSort();
+
+    int k = jobSequencing();
+
+    printf("\nSelected jobs (index in sorted order):\n");
+    int totalProfit = 0;
+    for (int i = 1; i <= k; i++) {
+        printf("Job %d (Profit: %d, Deadline: %d)\n", J[i], p[J[i]], d[J[i]]);
+        totalProfit += p[J[i]];
+    }
+
+    printf("Total profit = %d\n", totalProfit);
 
     return 0;
 }
